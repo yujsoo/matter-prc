@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import ganadiImgSrc from './assets/main_ganadi_01.png';
 import ganadiImgSrc2 from './assets/sub_ganadi_01.png';
-import goalPost from './assets/goalpost.png';
 import bg from './assets/bg.jpg';
 import ball from './assets/ball.png';
 
@@ -17,8 +16,6 @@ export default function MatterJs() {
     // Engine: 중력/충돌 등 물리 연산만 담당하는 시뮬레이션 코어 (화면에는 아무것도 안 그림)
     const engine = Engine.create();
     // Render: engine의 world 상태를 매 프레임 canvas에 그려주는 역할 (렌더러일 뿐, 물리엔 관여 안 함)
-
-    // 엔진 옵션 설정
     const render = Render.create({
       element: sceneRef.current, // 이 DOM 엘리먼트 안에 canvas를 생성해서 붙임
       engine,
@@ -38,29 +35,15 @@ export default function MatterJs() {
     });
 
     // 땅과벽
-    let ground = Bodies.rectangle((window.innerWidth / 2), window.innerHeight, window.innerWidth, 400, {
-      render: {
-        restitution: 0.5,
-        fillStyle:
-          'transparent',
-      },
-      isStatic: true,
-    });
-    let wallLeft = Bodies.rectangle(-80, window.innerHeight / 2, 160, window.innerHeight, {
-      isStatic: true,
-    });
-    let wallRight = Bodies.rectangle(window.innerWidth + 80, window.innerHeight / 2, 160, 1200, {
-      isStatic: true,
-    });
-    let roof = Bodies.rectangle((window.innerWidth / 2) + 160, -80, window.innerWidth + 320, 160, {
-      render: {
-        fillStyle: '#fff',
-      },
-      isStatic: true,
-    });
+    const ground = Bodies.rectangle(
+      (window.innerWidth / 2), window.innerHeight, window.innerWidth, 400, { render: { fillStyle: 'transparent' }, isStatic: true });
+    const wallLeft = Bodies.rectangle(-80, window.innerHeight / 2, 160, window.innerHeight, { isStatic: true });
+    const wallRight = Bodies.rectangle(window.innerWidth + 80, window.innerHeight / 2, 160, 1200, { isStatic: true });
+    const roof = Bodies.rectangle(
+      (window.innerWidth / 2) + 160, -80, window.innerWidth + 320, 160, { isStatic: true });
 
     // 가나디 1
-    let ganadiImg = Bodies.rectangle((window.innerWidth / 2) - 100, 100, 100, 100, {
+    const ganadiImg = Bodies.rectangle(600, 100, 100, 100, {
       render: {
         sprite: {
           texture: ganadiImgSrc,
@@ -71,7 +54,7 @@ export default function MatterJs() {
     });
 
     // 가나디 2
-    let subGanadiImg = Bodies.rectangle((window.innerWidth / 2) + 100, 100, 100, 100, {
+    const subGanadiImg = Bodies.rectangle(300, 100, 100, 100, {
       render: {
         sprite: {
           texture: ganadiImgSrc2,
@@ -79,13 +62,11 @@ export default function MatterJs() {
           yScale: 1,
         },
       },
-
     });
 
     // 축구공
-    let ballImg = Bodies.rectangle((window.innerWidth / 2), 100, 100, 100, {
+    const ballImg = Bodies.rectangle(400, 100, 100, 100, {
       render: {
-        restitution: 0.7,
         sprite: {
           texture: ball,
           xScale: 0.1,
@@ -94,21 +75,9 @@ export default function MatterJs() {
       },
     });
 
-    // 골대
-    let goalPostImg = Bodies.rectangle((window.innerWidth / 2), 100, window.innerWidth + 320, 160, {
-      render: {
-        sprite: {
-          texture: goalPost,
-          xScale: 0.1,
-          yScale: 0.1,
-        },
-      },
-      isStatic: true,
-    });
-
     // world는 engine이 계산할 body들의 집합. Composite.add로 등록해야 시뮬레이션에 포함됨
     // mouseConstraint도 world에 추가해야 등록된 body들이 실제로 마우스에 반응함
-    Composite.add(engine.world, [ground, wallLeft, wallRight, roof, ballImg, ganadiImg, goalPostImg, subGanadiImg, mouseConstraint]);
+    Composite.add(engine.world, [ground, wallLeft, wallRight, roof, ballImg, ganadiImg, subGanadiImg, mouseConstraint]);
 
     // Runner: engine.update를 requestAnimationFrame 주기로 반복 호출해주는 루프 (Engine.run의 대체)
     const runner = Runner.create();
@@ -116,69 +85,8 @@ export default function MatterJs() {
     // Render.run: render.canvas를 requestAnimationFrame 주기로 다시 그리는 루프 시작
     Render.run(render);
 
-    // resize: 캔버스 크기 + 정적 body(땅/벽/천장/골대)를 새 크기 기준으로 다시 생성해서 교체
-    const handleResize = () => {
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
-      render.canvas.width = newWidth;
-      render.canvas.height = newHeight;
-      render.options.width = newWidth;
-      render.options.height = newHeight;
-      render.bounds.max.x = newWidth;
-      render.bounds.max.y = newHeight;
-
-      const newGround = Bodies.rectangle(newWidth / 2, newHeight, newWidth, 400, {
-        render: { restitution: 0.5, fillStyle: 'transparent' },
-        isStatic: true,
-      });
-      const newWallLeft = Bodies.rectangle(-80, newHeight / 2, 160, newHeight, {
-        isStatic: true,
-      });
-      const newWallRight = Bodies.rectangle(newWidth + 80, newHeight / 2, 160, 1200, {
-        isStatic: true,
-      });
-      const newRoof = Bodies.rectangle((newWidth / 2) + 160, -80, newWidth + 320, 160, {
-        render: { fillStyle: '#fff' },
-        isStatic: true,
-      });
-      const newGoalPostImg = Bodies.rectangle(newWidth / 2, 100, newWidth + 320, 160, {
-        render: { sprite: { texture: goalPost, xScale: 0.1, yScale: 0.1 } },
-        isStatic: true,
-      });
-
-      const newGanadiImg = Bodies.rectangle((newWidth / 2) - 100, 100, 100, 100, {
-        render: {
-          sprite: { texture: ganadiImgSrc, xScale: 0.15, yScale: 0.14 },
-        },
-      });
-      const newSubGanadiImg = Bodies.rectangle((newWidth / 2) + 100, 100, 100, 100, {
-        render: {
-          sprite: { texture: ganadiImgSrc2, xScale: 1, yScale: 1 },
-        },
-      });
-      const newBallImg = Bodies.rectangle(newWidth / 2, 100, 100, 100, {
-        render: {
-          restitution: 0.7,
-          sprite: { texture: ball, xScale: 0.1, yScale: 0.1 },
-        },
-      });
-
-      Composite.remove(engine.world, [ground, wallLeft, wallRight, roof, goalPostImg, ganadiImg, subGanadiImg, ballImg]);
-      Composite.add(engine.world, [newGround, newWallLeft, newWallRight, newRoof, newGoalPostImg, newGanadiImg, newSubGanadiImg, newBallImg]);
-      ground = newGround;
-      wallLeft = newWallLeft;
-      wallRight = newWallRight;
-      roof = newRoof;
-      goalPostImg = newGoalPostImg;
-      ganadiImg = newGanadiImg;
-      subGanadiImg = newSubGanadiImg;
-      ballImg = newBallImg;
-    };
-    window.addEventListener('resize', handleResize);
-
     // React StrictMode에서 effect가 두 번 실행/정리되므로, 언마운트 시 엔진/렌더러/canvas를 반드시 정리
     return () => {
-      window.removeEventListener('resize', handleResize);
       Render.stop(render);
       Runner.stop(runner);
       Composite.clear(engine.world, false);
@@ -188,5 +96,5 @@ export default function MatterJs() {
     };
   }, []);
 
-  return <div ref={sceneRef} className="scene"/>;
+  return <div ref={sceneRef} className="scene" />;
 }
