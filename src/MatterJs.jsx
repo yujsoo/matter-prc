@@ -10,9 +10,10 @@ export default function MatterJs() {
   const sceneRef = useRef(null);
 
   useEffect(() => {
-    const { Engine, Render, Runner, Composite, Bodies, Mouse, MouseConstraint } = Matter;
+    const { Engine, Render, Runner, Composite, Bodies, Body, Mouse, MouseConstraint } = Matter;
     const width = window.innerWidth;
     const height = window.innerHeight;
+    let currentWidth = width;
 
     // Engine: 중력/충돌 등 물리 연산만 담당하는 시뮬레이션 코어 (화면에는 아무것도 안 그림)
     const engine = Engine.create();
@@ -146,33 +147,20 @@ export default function MatterJs() {
         isStatic: true,
       });
 
-      const newGanadiImg = Bodies.rectangle((newWidth / 2) - 100, 100, 100, 100, {
-        render: {
-          sprite: { texture: ganadiImgSrc, xScale: 0.15, yScale: 0.14 },
-        },
-      });
-      const newSubGanadiImg = Bodies.rectangle((newWidth / 2) + 100, 100, 100, 100, {
-        render: {
-          sprite: { texture: ganadiImgSrc2, xScale: 1, yScale: 1 },
-        },
-      });
-      const newBallImg = Bodies.rectangle(newWidth / 2, 100, 100, 100, {
-        render: {
-          restitution: 0.7,
-          sprite: { texture: ball, xScale: 0.1, yScale: 0.1 },
-        },
-      });
+      // 정적 body(땅/벽/천장/골대)만 교체. 가나디/공은 폭 변화량만큼 x만 이동 → 낙하 없이 중앙 정렬 유지
+      const deltaX = (newWidth - currentWidth) / 2;
+      Body.translate(ganadiImg, { x: deltaX, y: 0 });
+      Body.translate(subGanadiImg, { x: deltaX, y: 0 });
+      Body.translate(ballImg, { x: deltaX, y: 0 });
+      currentWidth = newWidth;
 
-      Composite.remove(engine.world, [ground, wallLeft, wallRight, roof, goalPostImg, ganadiImg, subGanadiImg, ballImg]);
-      Composite.add(engine.world, [newGround, newWallLeft, newWallRight, newRoof, newGoalPostImg, newGanadiImg, newSubGanadiImg, newBallImg]);
+      Composite.remove(engine.world, [ground, wallLeft, wallRight, roof, goalPostImg]);
+      Composite.add(engine.world, [newGround, newWallLeft, newWallRight, newRoof, newGoalPostImg]);
       ground = newGround;
       wallLeft = newWallLeft;
       wallRight = newWallRight;
       roof = newRoof;
       goalPostImg = newGoalPostImg;
-      ganadiImg = newGanadiImg;
-      subGanadiImg = newSubGanadiImg;
-      ballImg = newBallImg;
     };
     window.addEventListener('resize', handleResize);
 
